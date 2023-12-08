@@ -3,3 +3,8 @@ resolver = "2"
 members = [
     "app"
 ]
+
+[profile.release]
+strip = true  # Automatically strip symbols from the binary.
+lto = true # LTO instructs the linker to optimize at the link stage. This can, for example, remove dead code and often times reduces binary size.
+#codegen-units = 1 # Defaults to 16, reducing it will increase compile time but improve optimisations

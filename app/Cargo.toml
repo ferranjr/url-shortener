@@ -17,6 +17,8 @@ serde_json = { version = "1.0.108", features = [] }
 time = "0.3.30"
 dotenv = "0.15.0"
 async-trait = "0.1.74"
+log = { version = "0.4.20", features = [] }
+env_logger = { version = "0.10.1", features = [] }
 
 [dependencies.mongodb]
 version = "2.7.1"

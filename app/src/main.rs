@@ -16,12 +16,15 @@ use hyper::http::HeaderValue;
 use hyper::service::service_fn;
 use tokio::net::TcpListener;
 use hyper_util::rt::TokioIo;
+use log;
 use crate::models::http_protocol::{ShortenedUrlResponse, ShortenUrlRequest};
 use crate::repository::mongodb_repo::MongoRepo;
 use crate::repository::shorten_urls_repository::ShortenUrlsRepository;
 
 #[tokio::main]
 pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    env_logger::init();
+
     // Instantiate mongo repo
     let db = MongoRepo::init().await;
 
@@ -33,8 +36,7 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // use a 2 second timeout for processing the final request and graceful shutdown.
     let connection_timeouts = vec![Duration::from_secs(5), Duration::from_secs(2)];
 
-    // Todo: use one of the logger libraries
-    println!("Listening on http://{}", addr);
+    log::info!("Listening on http://{}", addr);
 
     loop {
         // When an incoming TCP connection is received grab a TCP stream for
@@ -49,7 +51,7 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let connection_timeouts_clone = connection_timeouts.clone();
 
         // Print the remote address connecting to our server.
-        println!("accepted connection from {:?}", remote_address);
+        log::trace!("accepted connection from {:?}", remote_address);
 
 
         let db = db.clone();
@@ -69,15 +71,15 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                         // In this case print either the successful or error result for the connection
                         // and break out of the loop.
                         match res {
-                            Ok(()) => println!("after polling conn, no error"),
-                            Err(err) =>  println!("error serving connection: {:?}", err),
+                            Ok(()) => log::trace!("after polling conn, no error"),
+                            Err(err) =>  log::error!("error serving connection: {:?}", err),
                         };
                         break;
                     }
                     _ = tokio::time::sleep(*sleep_duration) => {
                         // tokio::time::sleep returned a result.
                         // Call graceful_shutdown on the connection and continue the loop.
-                        println!("iter = {} got timeout_interval, calling conn.graceful_shutdown", iter);
+                        log::error!("iter = {} got timeout_interval, calling conn.graceful_shutdown", iter);
                         conn.as_mut().graceful_shutdown();
                     }
                 }
