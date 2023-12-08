@@ -1,6 +1,6 @@
 FROM rust:1.74.1-buster as builder
 WORKDIR /app
-COPY .. .
+COPY ../.. .
 RUN cargo install --path .
 
 

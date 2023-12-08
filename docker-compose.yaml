@@ -4,7 +4,7 @@ name: "url-shortener"
 services:
 
   url-shortener:
-    build: .
+    build: app/.
     image: localhost/url-shortener:latest
     ports:
       - "8080:8080"

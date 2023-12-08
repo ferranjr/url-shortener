@@ -16,7 +16,7 @@ use hyper::http::HeaderValue;
 use hyper::service::service_fn;
 use tokio::net::TcpListener;
 use hyper_util::rt::TokioIo;
-use crate::models::shorten_url_request::ShortenUrlRequest;
+use crate::models::http_protocol::{ShortenedUrlResponse, ShortenUrlRequest};
 use crate::repository::mongodb_repo::MongoRepo;
 use crate::repository::shorten_urls_repository::ShortenUrlsRepository;
 
@@ -144,10 +144,15 @@ async fn handle<T : ShortenUrlsRepository>(
             // so it can handle the writeException to recreate and retry
             let result = db.create_shortened_url(hyper::Uri::try_from(&shorten_url_req.url).unwrap()).await
                 .map(|shortened_url| {
-                    Response::new(full(format!("Your short url http://localhost:8080/{}", shortened_url.nano_id.as_str())))
-                }).unwrap();
+                    let response = ShortenedUrlResponse {
+                        url: shortened_url.url,
+                        short_url: format!("http://localhost:8080/{}", shortened_url.nano_id.as_str()),
+                    };
+                    let res = serde_json::to_string(&response).unwrap();
+                    Response::new(full(res))
+                });
 
-            Ok(result)
+            Ok(result.unwrap())
         }
         // Return the 404 Not Found for other routes.
         _ => {
