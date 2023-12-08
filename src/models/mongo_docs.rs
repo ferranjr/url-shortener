@@ -8,16 +8,3 @@ pub struct ShortenedUrl {
     pub nano_id: String,
     pub url: String
 }
-
-impl ShortenedUrl {
-    pub fn new(
-        nano_id: &str,
-        url: &str,
-    ) -> Self {
-        ShortenedUrl {
-            id: None,
-            nano_id: nano_id.to_string(),
-            url: url.to_string(),
-        }
-    }
-}

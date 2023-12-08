@@ -1632,6 +1632,7 @@ dependencies = [
 name = "url-shortener"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "bson",
  "dotenv",
  "http-body-util",

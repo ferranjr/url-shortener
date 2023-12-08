@@ -16,10 +16,9 @@ use hyper::http::HeaderValue;
 use hyper::service::service_fn;
 use tokio::net::TcpListener;
 use hyper_util::rt::TokioIo;
-use nanoid::nanoid;
 use crate::models::shorten_url_request::ShortenUrlRequest;
-use crate::models::mongo_docs::ShortenedUrl;
 use crate::repository::mongodb_repo::MongoRepo;
+use crate::repository::shorten_urls_repository::ShortenUrlsRepository;
 
 #[tokio::main]
 pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -51,6 +50,7 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
         // Print the remote address connecting to our server.
         println!("accepted connection from {:?}", remote_address);
+
 
         let db = db.clone();
         tokio::task::spawn(async move {
@@ -98,8 +98,8 @@ fn full<T: Into<Bytes>>(chunk: T) -> BoxBody<Bytes, hyper::Error> {
         .boxed()
 }
 
-async fn handle(
-    db: &MongoRepo,
+async fn handle<T : ShortenUrlsRepository>(
+    db: &T,
     req: Request<hyper::body::Incoming>,
 ) -> Result<Response<BoxBody<Bytes, hyper::Error>>, hyper::Error> {
     let method = req.method();
@@ -110,7 +110,7 @@ async fn handle(
         (&Method::GET, ["private", "status"]) => Ok(Response::new(full("OK"))),
         // Retrieve a specific code
         (&Method::GET, [code]) if !code.is_empty() => {
-            let res = db.get_full_url(code).await;
+            let res = db.get_by_nanoid(code).await;
 
             res.map(|maybe_url| {
                 match maybe_url {
@@ -142,12 +142,11 @@ async fn handle(
 
             // TODO: logic to create the shortened should be in a service that uses the repo,
             // so it can handle the writeException to recreate and retry
-            let short_id = nanoid!(8, &nanoid::alphabet::SAFE);
-            let shortened_url_id = db.create_shortened_url(ShortenedUrl::new(&short_id, &shorten_url_req.url)).await.unwrap();
-            let result = db.get_by_id(shortened_url_id).await.unwrap()
+            let result = db.create_shortened_url(hyper::Uri::try_from(&shorten_url_req.url).unwrap()).await
                 .map(|shortened_url| {
                     Response::new(full(format!("Your short url http://localhost:8080/{}", shortened_url.nano_id.as_str())))
                 }).unwrap();
+
             Ok(result)
         }
         // Return the 404 Not Found for other routes.
