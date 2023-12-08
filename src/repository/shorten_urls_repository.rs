@@ -6,6 +6,7 @@ use crate::models::mongo_docs::ShortenedUrl;
 
 #[async_trait]
 pub trait ShortenUrlsRepository {
+
     /// Creates a ShortenedUrl entry, it might fail due to nano_id or url already existing in db
     async fn create_shortened_url(&self, url: Uri) -> Result<ShortenedUrl, Error>;
 

@@ -1,5 +1,6 @@
 use std::env;
 use async_trait::async_trait;
+use bson::Document;
 
 extern crate dotenv;
 
@@ -29,6 +30,14 @@ impl MongoRepo {
         let col: Collection<ShortenedUrl> = db.collection("shortUrls");
         MongoRepo { col }
     }
+
+    async fn find_one(&self, doc: Document) -> Result<Option<ShortenedUrl>, Error> {
+        let result = self.col
+            .find_one(doc, None)
+            .await
+            .expect("Error getting shortened url's detail");
+        Ok(result)
+    }
 }
 
 #[async_trait]
@@ -53,35 +62,15 @@ impl ShortenUrlsRepository for MongoRepo {
         Ok(result)
     }
 
-    async fn get_by_oid(&self, id: ObjectId) -> Result<Option<ShortenedUrl>, Error> {    //     let filter = doc! {"_id": id};
-        let filter = doc! {"_id": id};
-        let shortened_url = self
-            .col
-            .find_one(filter, None)
-            .await
-            .expect("Error getting shortened url's detail");
-
-        Ok(shortened_url)
+    async fn get_by_oid(&self, id: ObjectId) -> Result<Option<ShortenedUrl>, Error> {
+        self.find_one(doc! {"_id": id}).await
     }
 
     async fn get_by_nanoid(&self, nano_id: &str) -> Result<Option<ShortenedUrl>, Error> {
-        let filter = doc! {"nano_id": nano_id};
-        let shortened_url = self
-            .col
-            .find_one(filter, None)
-            .await
-            .expect("Error getting shortened url's detail");
-
-        Ok(shortened_url)
+        self.find_one(doc! {"nano_id": nano_id}).await
     }
 
     async fn get_by_url(&self, url: Uri) -> Result<Option<ShortenedUrl>, Error> {
-        let filter = doc! { "url": url.to_string() };
-        let shortened_url = self
-            .col
-            .find_one(filter, None)
-            .await
-            .expect("Error getting shortened url's detail");
-        Ok(shortened_url)
+        self.find_one(doc! { "url": url.to_string() }).await
     }
 }
