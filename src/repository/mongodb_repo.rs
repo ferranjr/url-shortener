@@ -26,7 +26,7 @@ impl MongoRepo {
         };
         let client = Client::with_uri_str(uri).await.unwrap();
         let db = client.database("shortUrlsDb");
-        let col: Collection<ShortenedUrl> = db.collection("shortUrlsDb");
+        let col: Collection<ShortenedUrl> = db.collection("shortUrls");
         MongoRepo { col }
     }
 }
